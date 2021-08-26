@@ -1,0 +1,107 @@
+{
+  "nodes": {
+    "flake-utils": {
+      "locked": {
+        "lastModified": 1631561581,
+        "narHash": "sha256-3VQMV5zvxaVLvqqUrNz3iJelLw30mIVSfZmAaauM3dA=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "7e5bf3925f6fbdfaf50a2a7ca0be2879c4261d19",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1633152178,
+        "narHash": "sha256-qAKE0XCb0bm9oZQvtNzxs/SfEbeIOdVt1blhjYRS86o=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "0f3893d55a06f4a509642b1deb1465560930237f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nocargo": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "registry-crates-io": [
+          "registry-crates-io"
+        ]
+      },
+      "locked": {
+        "lastModified": 1630777177,
+        "narHash": "sha256-hX+g29QOIbPhgNd6ZSRRL8g2GdGJty4TPjjNNZDNICM=",
+        "owner": "oxalica",
+        "repo": "nocargo",
+        "rev": "51172857f4c2d5ae9fd2ffe4bb8293e49decbbc2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "nocargo",
+        "type": "github"
+      }
+    },
+    "registry-crates-io": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1633157761,
+        "narHash": "sha256-QufbRtXudt3svEYPEghJNU/oxaH9xyp7IU+7YT7e3w0=",
+        "owner": "rust-lang",
+        "repo": "crates.io-index",
+        "rev": "e5240b2a91fd1d214ea5802d3792a877cd67218e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "rust-lang",
+        "repo": "crates.io-index",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "flake-utils": "flake-utils",
+        "nixpkgs": "nixpkgs",
+        "nocargo": "nocargo",
+        "registry-crates-io": "registry-crates-io",
+        "rust-overlay": "rust-overlay"
+      }
+    },
+    "rust-overlay": {
+      "inputs": {
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1633140981,
+        "narHash": "sha256-1q9Z7+2Y9U5ab34Cwv8GwQe1G+Y7uFZ7tim6gDIrQ4Q=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "f42b3a63f34e8247fb9ce46b4f378cc7626821f0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
