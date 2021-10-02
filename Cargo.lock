@@ -200,7 +200,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cloudflare-ddns-rs"
+name = "cloudflare-ddns"
 version = "0.1.0"
 dependencies = [
  "clap",
