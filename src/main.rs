@@ -239,7 +239,7 @@ fn app(config: Config, oneshot: bool) -> i32 {
                         }
                     }
                 }
-                let msg = "Successfully update DNS records".green();
+                let msg = "Successfully updated DNS records".green();
                 println!("{}", msg);
                 if oneshot {
                     return 0;
