@@ -20,7 +20,7 @@
 
   outputs = { nixpkgs, flake-utils, rust-overlay, nocargo, ... }@inputs: {
     overlay = final: prev: with final; {
-      cloudflare-ddns = nocargo.buildRustCrateFromSrcAndLock {
+      cloudflare-ddns = final.nocargo.buildRustCrateFromSrcAndLock {
         src = ./.;
         inherit rustc;
       };
