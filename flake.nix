@@ -25,7 +25,7 @@
         inherit rustc;
       };
     };
-    nixosModule = {
+    nixosModules = {
       cloudflare-ddns = import ./module.nix;
     };
   } // flake-utils.lib.eachDefaultSystem (system:
