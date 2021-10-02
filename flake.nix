@@ -1,5 +1,5 @@
 {
-  description = "Rust crate cf-ddns";
+  description = "A ddns client for cloudflare";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs";
@@ -18,8 +18,14 @@
     registry-crates-io = { url = "github:rust-lang/crates.io-index"; flake = false; };
   };
 
-  outputs = { nixpkgs, flake-utils, rust-overlay, nocargo, ... }@inputs:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs = { nixpkgs, flake-utils, rust-overlay, nocargo, ... }@inputs: {
+    overlay = final: prev: with final; {
+      cloudflare-ddns = nocargo.buildRustCrateFromSrcAndLock {
+        src = ./.;
+        inherit rustc;
+      };
+    };
+  } // flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
           inherit system;
@@ -27,22 +33,14 @@
         };
 
         rustc = pkgs.rust-bin.nightly.latest.minimal;
-
       in
       rec {
-        defaultPackage = packages."cf-ddns";
+        defaultPackage = packages."cloudflare-ddns";
         defaultApp = defaultPackage.bin;
 
-        packages."cf-ddns" = pkgs.nocargo.buildRustCrateFromSrcAndLock {
+        packages."cloudflare-ddns" = pkgs.nocargo.buildRustCrateFromSrcAndLock {
           src = ./.;
           inherit rustc;
-        };
-
-        devShell = with pkgs; mkShell {
-          buildInputs = [
-            openssl
-            pkg-config
-          ];
         };
       });
 }

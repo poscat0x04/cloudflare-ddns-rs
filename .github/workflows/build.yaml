@@ -24,6 +24,6 @@ jobs:
           skipPush: true
       - name: Build and upload to cachix
         run: |
-          nix build -L --json ".#cf-ddns.bin" \
-            | jq -r ".[0].outputs.out" \
+          nix build -L --json ".#cloudflare-ddns.bin" \
+            | jq -r '.[].outputs | to_entries[].value' \
             | cachix push nix-repo
