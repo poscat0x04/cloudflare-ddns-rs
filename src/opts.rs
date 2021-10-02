@@ -5,4 +5,6 @@ use clap::{AppSettings, Clap};
 pub struct Opts {
     #[clap(short, long)]
     pub config: String,
+    #[clap(short, long)]
+    pub oneshot: bool,
 }

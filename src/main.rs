@@ -22,7 +22,10 @@ use std::default::Default;
 use std::fs::read_to_string;
 use std::net::{Ipv4Addr, Ipv6Addr};
 use std::process::exit;
+use std::{thread, time::Duration};
 use toml::from_str;
+
+const SLEEP_TIME: u64 = 30;
 
 fn main() {
     let r = main_();
@@ -36,7 +39,7 @@ fn main_() -> i32 {
                 .expect("Internal error: unable to print to stderr");
             return 17;
         }
-        Ok(Opts { config }) => match read_to_string(&config) {
+        Ok(Opts { config, oneshot }) => match read_to_string(&config) {
             Err(e) => {
                 let mut err_msg =
                     format!("Unable to read config file \"{}\", I/O error:", &config).yellow();
@@ -55,13 +58,13 @@ fn main_() -> i32 {
                     println!("{}", err_msg);
                     return 19;
                 }
-                Ok(cfg) => app(cfg),
+                Ok(cfg) => app(cfg, oneshot),
             },
         },
     }
 }
 
-fn app(config: Config) -> i32 {
+fn app(config: Config, oneshot: bool) -> i32 {
     // construct the interface address mapping
     let mut ipv4_map = HashMap::new();
     let mut ipv6_map = HashMap::new();
@@ -98,99 +101,41 @@ fn app(config: Config) -> i32 {
                 proxied,
                 ttl,
             } = config.config;
-            match get_all_record_ids(&client, &zone_id, &name) {
-                Err(err) => {
-                    let mut err_msg = format!(
+            loop {
+                match get_all_record_ids(&client, &zone_id, &name) {
+                    Err(err) => {
+                        let mut err_msg = format!(
                         "Failed to fetch A and AAAA records associated with the domain name \"{}\":",
                         name
                     )
                     .yellow();
-                    println!("{}", err_msg);
-                    err_msg = err.to_string().red();
-                    println!("{}", err_msg);
-                    return 1;
-                }
-                Ok((ipv4_ids, ipv6_ids)) => {
-                    let empty_vec4 = Vec::new();
-                    let empty_vec6 = Vec::new();
-                    let iface_ipv4_addrs = ipv4_map.get(&iface).unwrap_or(&empty_vec4);
-                    let iface_ipv6_addrs = ipv6_map.get(&iface).unwrap_or(&empty_vec6);
-                    if ipv4_ids.len() == 1 && iface_ipv4_addrs.len() == 1 {
-                        let addr = iface_ipv4_addrs[0];
-                        let r = client.request(&UpdateDnsRecord {
-                            zone_identifier: &zone_id,
-                            identifier: &ipv4_ids[0],
-                            params: UpdateDnsRecordParams {
-                                ttl: Some(ttl),
-                                proxied: Some(proxied),
-                                name: &name,
-                                content: DnsContent::A { content: addr },
-                            },
-                        });
-                        if let Err(err) = r {
-                            let mut err_msg = format!(
-                                "Failed to update A record with content {} for domain \"{}\"",
-                                addr, name
-                            )
-                            .yellow();
-                            println!("{}", err_msg);
-                            err_msg = err.to_string().red();
-                            println!("{}", err_msg);
-                            return 1;
-                        }
-                    } else {
-                        if let Err(err) = delete_all_records(&client, &zone_id, &ipv4_ids) {
-                            let mut err_msg = format!(
-                                    "Failed to delete all A records associated with the domain name \"{}\"",name
-                                )
-                                .yellow();
-                            println!("{}", err_msg);
-                            err_msg = err.to_string().red();
-                            println!("{}", err_msg);
-                            return 1;
-                        }
-                        for addr in iface_ipv4_addrs {
-                            let r = client.request(&CreateDnsRecord {
-                                zone_identifier: &zone_id,
-                                params: CreateDnsRecordParams {
-                                    ttl: Some(ttl),
-                                    priority: None,
-                                    proxied: Some(proxied),
-                                    name: &name,
-                                    content: DnsContent::A { content: *addr },
-                                },
-                            });
-                            if let Err(err) = r {
-                                let mut err_msg = format!(
-                                    "Failed to create A record with content {} for domain \"{}\"",
-                                    addr, name
-                                )
-                                .yellow();
-                                println!("{}", err_msg);
-                                err_msg = err.to_string().red();
-                                println!("{}", err_msg);
-                                return 1;
-                            }
-                        }
+                        println!("{}", err_msg);
+                        err_msg = err.to_string().red();
+                        println!("{}", err_msg);
+                        return 1;
                     }
-                    if dualstack {
-                        if ipv6_ids.len() == 1 && iface_ipv6_addrs.len() == 1 {
-                            let addr = iface_ipv6_addrs[0];
+                    Ok((ipv4_ids, ipv6_ids)) => {
+                        let empty_vec4 = Vec::new();
+                        let empty_vec6 = Vec::new();
+                        let iface_ipv4_addrs = ipv4_map.get(&iface).unwrap_or(&empty_vec4);
+                        let iface_ipv6_addrs = ipv6_map.get(&iface).unwrap_or(&empty_vec6);
+                        if ipv4_ids.len() == 1 && iface_ipv4_addrs.len() == 1 {
+                            let addr = iface_ipv4_addrs[0];
                             let r = client.request(&UpdateDnsRecord {
                                 zone_identifier: &zone_id,
-                                identifier: &ipv6_ids[0],
+                                identifier: &ipv4_ids[0],
                                 params: UpdateDnsRecordParams {
                                     ttl: Some(ttl),
                                     proxied: Some(proxied),
                                     name: &name,
-                                    content: DnsContent::AAAA { content: addr },
+                                    content: DnsContent::A { content: addr },
                                 },
                             });
                             if let Err(err) = r {
                                 let mut err_msg = format!(
-                                "Failed to update AAAA record with content {} for domain \"{}\"",
-                                addr, name
-                            )
+                                    "Failed to update A record with content {} for domain \"{}\"",
+                                    addr, name
+                                )
                                 .yellow();
                                 println!("{}", err_msg);
                                 err_msg = err.to_string().red();
@@ -198,9 +143,9 @@ fn app(config: Config) -> i32 {
                                 return 1;
                             }
                         } else {
-                            if let Err(err) = delete_all_records(&client, &zone_id, &ipv6_ids) {
+                            if let Err(err) = delete_all_records(&client, &zone_id, &ipv4_ids) {
                                 let mut err_msg = format!(
-                                    "Failed to delete all AAAA records associated with the domain name \"{}\"",name
+                                    "Failed to delete all A records associated with the domain name \"{}\"",name
                                 )
                                 .yellow();
                                 println!("{}", err_msg);
@@ -208,7 +153,7 @@ fn app(config: Config) -> i32 {
                                 println!("{}", err_msg);
                                 return 1;
                             }
-                            for addr in iface_ipv6_addrs {
+                            for addr in iface_ipv4_addrs {
                                 let r = client.request(&CreateDnsRecord {
                                     zone_identifier: &zone_id,
                                     params: CreateDnsRecordParams {
@@ -216,15 +161,15 @@ fn app(config: Config) -> i32 {
                                         priority: None,
                                         proxied: Some(proxied),
                                         name: &name,
-                                        content: DnsContent::AAAA { content: *addr },
+                                        content: DnsContent::A { content: *addr },
                                     },
                                 });
                                 if let Err(err) = r {
                                     let mut err_msg = format!(
-                                    "Failed to create AAAA record with content {} for domain \"{}\"",
+                                    "Failed to create A record with content {} for domain \"{}\"",
                                     addr, name
                                 )
-                                .yellow();
+                                    .yellow();
                                     println!("{}", err_msg);
                                     err_msg = err.to_string().red();
                                     println!("{}", err_msg);
@@ -232,12 +177,76 @@ fn app(config: Config) -> i32 {
                                 }
                             }
                         }
+                        if dualstack {
+                            if ipv6_ids.len() == 1 && iface_ipv6_addrs.len() == 1 {
+                                let addr = iface_ipv6_addrs[0];
+                                let r = client.request(&UpdateDnsRecord {
+                                    zone_identifier: &zone_id,
+                                    identifier: &ipv6_ids[0],
+                                    params: UpdateDnsRecordParams {
+                                        ttl: Some(ttl),
+                                        proxied: Some(proxied),
+                                        name: &name,
+                                        content: DnsContent::AAAA { content: addr },
+                                    },
+                                });
+                                if let Err(err) = r {
+                                    let mut err_msg = format!(
+                                "Failed to update AAAA record with content {} for domain \"{}\"",
+                                addr, name
+                            )
+                                    .yellow();
+                                    println!("{}", err_msg);
+                                    err_msg = err.to_string().red();
+                                    println!("{}", err_msg);
+                                    return 1;
+                                }
+                            } else {
+                                if let Err(err) = delete_all_records(&client, &zone_id, &ipv6_ids) {
+                                    let mut err_msg = format!(
+                                    "Failed to delete all AAAA records associated with the domain name \"{}\"",name
+                                )
+                                .yellow();
+                                    println!("{}", err_msg);
+                                    err_msg = err.to_string().red();
+                                    println!("{}", err_msg);
+                                    return 1;
+                                }
+                                for addr in iface_ipv6_addrs {
+                                    let r = client.request(&CreateDnsRecord {
+                                        zone_identifier: &zone_id,
+                                        params: CreateDnsRecordParams {
+                                            ttl: Some(ttl),
+                                            priority: None,
+                                            proxied: Some(proxied),
+                                            name: &name,
+                                            content: DnsContent::AAAA { content: *addr },
+                                        },
+                                    });
+                                    if let Err(err) = r {
+                                        let mut err_msg = format!(
+                                    "Failed to create AAAA record with content {} for domain \"{}\"",
+                                    addr, name
+                                )
+                                .yellow();
+                                        println!("{}", err_msg);
+                                        err_msg = err.to_string().red();
+                                        println!("{}", err_msg);
+                                        return 1;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
+                let msg = "Successfully update DNS records".green();
+                println!("{}", msg);
+                if oneshot {
+                    return 0;
+                }
+                println!("Going into sleep for {} seconds", SLEEP_TIME);
+                thread::sleep(Duration::from_secs(SLEEP_TIME));
             }
-            let msg = "Successfully update DNS records".green();
-            println!("{}", msg);
-            return 0;
         }
     }
 }
