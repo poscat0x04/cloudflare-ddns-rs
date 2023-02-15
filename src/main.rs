@@ -1,38 +1,19 @@
-#![feature(ip)]
+use cloudflare::framework::auth;
+use cli::Args;
+use config::Credentials;
 
 mod config;
-mod opts;
+mod cli;
+mod iface;
 
-use crate::config::{Config, Credentials, DomainConfig};
-use crate::opts::Opts;
-use clap::Clap;
-use cloudflare::endpoints::dns::*;
-use cloudflare::framework::apiclient::ApiClient;
-use cloudflare::framework::auth;
-use cloudflare::framework::response::ApiFailure;
-use cloudflare::framework::Environment;
-use cloudflare::framework::HttpApiClient;
-use colored::Colorize;
-use core::mem::transmute;
-use nix::ifaddrs::*;
-use nix::net::if_::InterfaceFlags;
-use nix::sys::socket::{InetAddr, SockAddr};
-use std::collections::HashMap;
-use std::default::Default;
-use std::fs::read_to_string;
-use std::net::{Ipv4Addr, Ipv6Addr};
-use std::process::exit;
-use std::{thread, time::Duration};
-use toml::from_str;
-
-const SLEEP_TIME: u64 = 30;
-
-fn main() {
-    let r = main_();
-    exit(r);
+#[tokio::main]
+async fn main() {
+    let args: Args = argh::from_env();
+    println!("{:?}", args);
 }
 
 fn main_() -> i32 {
+    /*
     match Opts::try_parse() {
         Err(e) => {
             e.print()
@@ -62,8 +43,11 @@ fn main_() -> i32 {
             },
         },
     }
+    */
+    return 0;
 }
 
+/*
 fn app(config: Config, oneshot: bool) -> i32 {
     // construct the interface address mapping
     let mut ipv4_map = HashMap::new();
@@ -272,7 +256,7 @@ fn build_iface_map(
         match addr.address {
             Some(SockAddr::Inet(InetAddr::V4(sockaddr_in))) => {
                 let ipv4_addr: Ipv4Addr = unsafe { transmute(sockaddr_in.sin_addr.s_addr) };
-                if ipv4_addr.is_global() {
+                if !ipv4_addr.is_link_local() {
                     match ipv4_map.get_mut(&iface) {
                         None => {
                             let mut v = Vec::new();
@@ -287,7 +271,7 @@ fn build_iface_map(
             }
             Some(SockAddr::Inet(InetAddr::V6(sockaddr_in6))) => {
                 let ipv6_addr = Ipv6Addr::from(sockaddr_in6.sin6_addr.s6_addr);
-                if ipv6_addr.is_global() {
+                if true {
                     match ipv6_map.get_mut(&iface) {
                         None => {
                             let mut v = Vec::new();
@@ -365,6 +349,7 @@ where
     }
     return Ok((ipv4_ids, ipv6_ids));
 }
+*/
 
 // helper functions
 

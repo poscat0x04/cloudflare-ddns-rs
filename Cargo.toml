@@ -4,9 +4,29 @@ name = "cloudflare-ddns"
 version = "0.1.0"
 
 [dependencies]
-clap = "3.0.0-beta.4"
-cloudflare = {version = "0.8.6", features = ["rustls-tls"], default-features = false}
-colored = "2.0.0"
-nix = "0.23.0"
-serde = {version = "1.0", features = ["derive"]}
-toml = "0.5.8"
+anyhow = "1.0"
+
+tokio.version = "1.25"
+tokio.features = ["fs", "macros"]
+
+cloudflare = "0.10.1"
+
+nix.version = "0.26"
+nix.features = ["net", "socket"]
+nix.default-features = false
+
+argh = "0.1"
+
+serde.version = "1.0"
+serde.features = ["derive"]
+
+toml = "0.7"
+
+[profile.dev]
+opt-level = 1
+
+[profile.release]
+opt-level = 'z'
+lto = true
+strip = true
+panic = "abort"
