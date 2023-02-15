@@ -1,6 +1,4 @@
-use cloudflare::framework::auth;
 use cli::Args;
-use config::Credentials;
 
 mod config;
 mod cli;
@@ -350,14 +348,3 @@ where
     return Ok((ipv4_ids, ipv6_ids));
 }
 */
-
-// helper functions
-
-impl Credentials {
-    fn convert(self) -> auth::Credentials {
-        match self {
-            Credentials::AuthKey { email, key } => auth::Credentials::UserAuthKey { email, key },
-            Credentials::AuthToken { token } => auth::Credentials::UserAuthToken { token },
-        }
-    }
-}
