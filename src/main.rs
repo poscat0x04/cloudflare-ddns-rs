@@ -1,13 +1,27 @@
+use anyhow::{Context, Result};
+use tokio::fs::read_to_string;
+use toml::from_str;
+
 use cli::Args;
+use crate::utils::build_client_from_env;
 
 mod config;
 mod cli;
 mod iface;
+mod utils;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     let args: Args = argh::from_env();
-    println!("{:?}", args);
+
+    let cfg_file =
+        read_to_string(&args.config).await
+            .context("Failed to read config file")?;
+    let cfg = from_str(&cfg_file).context("Failed to parse config file")?;
+
+    let client = build_client_from_env()?;
+
+    Ok(())
 }
 
 fn main_() -> i32 {
