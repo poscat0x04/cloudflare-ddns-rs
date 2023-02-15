@@ -7,14 +7,14 @@ use nix::sys::socket::AddressFamily::{Inet, Inet6};
 use nix::sys::socket::SockaddrLike;
 
 /// Getting all IPv{4,6} addresses on a specific interface
-pub fn get_addrs(name: String) -> Result<(Vec<Ipv4Addr>, Vec<Ipv6Addr>)> {
+fn get_addrs(if_name: &str) -> Result<(Vec<Ipv4Addr>, Vec<Ipv6Addr>)> {
     let mut v4 = Vec::new();
     let mut v6 = Vec::new();
 
     // Find all the addresses on that interface
     let addrs =
         getifaddrs()?
-            .filter(|a| a.interface_name == name)
+            .filter(|a| a.interface_name == if_name)
             // getifaddrs() will return return at least one entry for each interface. If that interface
             // have neither MAC nor L3 addresses, which is possible for e.g. tun and ppp interfaces,
             // then the address field of the only entry will be set to NULL/None. We filter those out.
@@ -42,21 +42,48 @@ pub fn get_addrs(name: String) -> Result<(Vec<Ipv4Addr>, Vec<Ipv6Addr>)> {
     Ok((v4, v6))
 }
 
+/// Get all the addresses that we are interested in, which is all the addresses
+/// except link local addresses and loopback addresses.
+pub fn get_interested_addrs(if_name: &str)
+                            -> Result<(impl Iterator<Item=Ipv4Addr>, impl Iterator<Item=Ipv6Addr>)>
+{
+    let (all_v4, all_v6) = get_addrs(if_name)?;
+    let filtered_v4 =
+        all_v4.into_iter().filter(
+            |addr| !addr.is_link_local() && !addr.is_loopback()
+        );
+    let filtered_v6 =
+        all_v6.into_iter().filter(|addr| {
+            let seg = addr.segments();
+            !addr.is_loopback() && seg[0] & 0xffc0 != 0xfe80
+        });
+    Ok((filtered_v4, filtered_v6))
+}
+
 #[cfg(test)]
 mod test {
     use std::net::{Ipv4Addr, Ipv6Addr};
 
     use nix::Result;
 
-    use crate::iface::get_addrs;
+    use crate::iface::{get_addrs, get_interested_addrs};
 
     #[test]
-    fn test_getifaddr() -> Result<()> {
-        let (v4addrs, v6addrs) = get_addrs(String::from("lo"))?;
+    fn test_get_addrs() -> Result<()> {
+        let (v4addrs, v6addrs) = get_addrs("lo")?;
 
         assert_eq!(v4addrs[0], Ipv4Addr::new(127, 0, 0, 1));
         assert_eq!(v6addrs[0], Ipv6Addr::from(1));
 
+        Ok(())
+    }
+
+    #[test]
+    fn test_get_interested_addrs() -> Result<()> {
+        let (v4addrs, v6addrs) = get_interested_addrs("ens34")?;
+
+        println!("{:?}", v4addrs.collect::<Vec<_>>());
+        println!("{:?}", v6addrs.collect::<Vec<_>>());
         Ok(())
     }
 }
