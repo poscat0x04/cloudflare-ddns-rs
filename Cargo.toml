@@ -42,6 +42,10 @@ features = ["fs", "sync", "macros", "rt-multi-thread"]
 default = ["systemd"]
 systemd = ["dep:systemd"]
 
+[[bin]]
+name = "cf-ddns"
+path = "src/main.rs"
+
 [profile.dev]
 opt-level = 1
 
