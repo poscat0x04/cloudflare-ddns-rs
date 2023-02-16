@@ -73,7 +73,7 @@ mod test {
 
     use nix::Result;
 
-    use crate::iface::{Addrs, get_addrs, get_interested_addrs};
+    use crate::interface::{Addrs, get_addrs, get_interested_addrs};
 
     #[test]
     fn test_get_addrs() -> Result<()> {

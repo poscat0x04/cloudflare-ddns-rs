@@ -27,7 +27,7 @@ pub async fn update_dns_with(
     let RecordIDs {
         v4_ids,
         v6_ids,
-    } = get_all_record_ids(&client, &cfg.zone_id, &cfg.name).await?;
+    } = get_all_record_ids(client, &cfg.zone_id, &cfg.name).await?;
 
     // We use a macro because while the update logic is the same for both A and AAAA records, it can't be typed if
     // we try to implement it as a function.
