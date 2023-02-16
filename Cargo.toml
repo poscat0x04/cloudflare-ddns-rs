@@ -16,7 +16,6 @@ categories = ["command-line-utilities"]
 [dependencies]
 cloudflare = "0.10.1"
 anyhow = "1.0"
-parse_duration = "2.1"
 itertools = "0.10"
 argh = "0.1"
 toml = "0.7"

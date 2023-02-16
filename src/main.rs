@@ -2,7 +2,6 @@ use std::time::Duration;
 
 use anyhow::{bail, Context, Result};
 use cloudflare::framework::async_api::Client;
-use parse_duration::parse;
 use tokio::fs::read_to_string;
 use toml::from_str;
 
@@ -37,10 +36,10 @@ async fn main() -> Result<()> {
 
     if !cfg.v4 && !cfg.v6 { bail!(r#"The config options "v4" and "v6" cant both be false."#) }
 
-    let interval = match &cfg.wait_duration {
-        Some(d) => parse(d).with_context(|| format!("Failed to parse duration \"{}\"", d))?,
-        None => DEFAULT_INTERVAL
-    };
+    let interval =
+        cfg.wait_duration
+            .map(|min| Duration::from_secs(min*60))
+            .unwrap_or(DEFAULT_INTERVAL);
 
     let client = build_client_from_env()?;
     // initialization complete
