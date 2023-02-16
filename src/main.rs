@@ -1,31 +1,38 @@
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use tokio::fs::read_to_string;
 use toml::from_str;
 
-use cli::Args;
+use crate::cli::Args;
+use crate::config::Config;
 use crate::utils::build_client_from_env;
 
 mod config;
 mod cli;
+mod dns;
 mod iface;
 mod utils;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // initialization
     let args: Args = argh::from_env();
 
     let cfg_file =
         read_to_string(&args.config).await
             .context("Failed to read config file")?;
-    let cfg = from_str(&cfg_file).context("Failed to parse config file")?;
+    let cfg: Config = from_str(&cfg_file).context("Failed to parse config file")?;
+    drop(cfg_file);
+
+    if !cfg.v4 && !cfg.v6 { bail!(r#"The config options "v4" and "v6" cant both be false."#) }
 
     let client = build_client_from_env()?;
+    // initialization complete
 
     Ok(())
 }
 
+/*
 fn main_() -> i32 {
-    /*
     match Opts::try_parse() {
         Err(e) => {
             e.print()
@@ -55,9 +62,9 @@ fn main_() -> i32 {
             },
         },
     }
-    */
     return 0;
 }
+*/
 
 /*
 fn app(config: Config, oneshot: bool) -> i32 {

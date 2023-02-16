@@ -1,5 +1,5 @@
 [package]
-edition = "2018"
+edition = "2021"
 name = "cloudflare-ddns"
 version = "0.1.0"
 
@@ -7,8 +7,9 @@ version = "0.1.0"
 anyhow = "1.0"
 
 tokio.version = "1.25"
-tokio.features = ["fs", "macros"]
+tokio.features = ["fs", "sync", "macros", "rt-multi-thread"]
 
+itertools = "0.10"
 cloudflare = "0.10.1"
 
 nix.version = "0.26"

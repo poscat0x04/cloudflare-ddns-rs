@@ -20,7 +20,7 @@ fn get_addrs(if_name: &str) -> Result<(Vec<Ipv4Addr>, Vec<Ipv6Addr>)> {
             // then the address field of the only entry will be set to NULL/None. We filter those out.
             .filter_map(|a| a.address);
 
-    // Loop over the addresses, add them to the vec if it is a IPv4 address or a IPv6 address
+    // Loop over the addresses, add them to the vec if they are a IPv4 address or a IPv6 address
     for addr in addrs {
         // family() will return None if the `nix` crate does not recognize the address family. We
         // will only check the address families that we're interested in, i.e., `AF_INET` (IPv4) and
