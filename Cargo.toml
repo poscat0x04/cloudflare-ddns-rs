@@ -1,32 +1,43 @@
 [package]
-edition = "2021"
 name = "cloudflare-ddns"
+description = "Cloudflare dynamic DNS client"
 version = "0.1.0"
+edition = "2021"
+authors = ["poscat <poscat@poscat.moe>"]
+
+repository = "https://github.com/poscat0x04/cloudflare-ddns-rs"
+
+readme = "README.md"
+license = "BSD-3"
+
+keywords = ["DNS", "cloudflare"]
+categories = ["command-line-utilities"]
 
 [dependencies]
-anyhow = "1.0"
-
-tokio.version = "1.25"
-tokio.features = ["fs", "sync", "macros", "rt-multi-thread"]
-
-itertools = "0.10"
 cloudflare = "0.10.1"
-
-nix.version = "0.26"
-nix.features = ["net", "socket"]
-nix.default-features = false
-
-argh = "0.1"
-
-serde.version = "1.0"
-serde.features = ["derive"]
-
-toml = "0.7"
+anyhow = "1.0"
 parse_duration = "2.1"
+itertools = "0.10"
+argh = "0.1"
+toml = "0.7"
 
-systemd.version = "0.10"
-systemd.optional = true
-systemd.default-features = false
+[dependencies.nix]
+version = "0.26"
+features = ["net", "socket"]
+default-features = false
+
+[dependencies.systemd]
+version = "0.10"
+optional = true
+default-features = false
+
+[dependencies.serde]
+version = "1.0"
+features = ["derive"]
+
+[dependencies.tokio]
+version = "1.25"
+features = ["fs", "sync", "macros", "rt-multi-thread"]
 
 [features]
 default = ["systemd"]
@@ -40,3 +51,4 @@ opt-level = 'z'
 lto = true
 strip = true
 panic = "abort"
+

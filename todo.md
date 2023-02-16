@@ -6,3 +6,4 @@
 - [ ] Factor out useful modules into a library
 - [ ] Write a nix flake
 - [ ] Write GitHub Actions
+- [ ] Optimize `dns::get_all_record_ids` when the upstream issue is resolved

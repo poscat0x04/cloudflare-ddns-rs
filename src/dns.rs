@@ -104,6 +104,7 @@ async fn get_all_record_ids(
     // pagination tracker
     let mut page = 1;
 
+    // TODO: query only A and AAAA records when the cloudflare crates supports it
     loop {
         let r: ApiSuccess<Vec<DnsRecord>> =
             client.request(&ListDnsRecords {
