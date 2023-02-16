@@ -7,6 +7,7 @@ use cloudflare::framework::async_api::Client;
 use cloudflare::framework::auth::Credentials;
 use cloudflare::framework::Environment;
 
+/// Read the auth token from environment and build a `Client` out of it
 pub fn build_client_from_env() -> Result<Client> {
     let token = var("CLOUDFLARE_API_TOKEN")
         .context("Failed to read API token from environment variable.\nPlease make sure that CLOUDFLARE_API_TOKEN is set properly.")?;

@@ -6,6 +6,11 @@ use nix::Result;
 use nix::sys::socket::AddressFamily::{Inet, Inet6};
 use nix::sys::socket::SockaddrLike;
 
+pub struct Addrs {
+    pub v4_addrs: Box<dyn Iterator<Item=Ipv4Addr>>,
+    pub v6_addrs: Box<dyn Iterator<Item=Ipv6Addr>>,
+}
+
 /// Getting all IPv{4,6} addresses on a specific interface
 fn get_addrs(if_name: &str) -> Result<(Vec<Ipv4Addr>, Vec<Ipv6Addr>)> {
     let mut v4 = Vec::new();
@@ -44,8 +49,7 @@ fn get_addrs(if_name: &str) -> Result<(Vec<Ipv4Addr>, Vec<Ipv6Addr>)> {
 
 /// Get all the addresses that we are interested in, which is all the addresses
 /// except link local addresses and loopback addresses.
-pub fn get_interested_addrs(if_name: &str)
-                            -> Result<(impl Iterator<Item=Ipv4Addr>, impl Iterator<Item=Ipv6Addr>)>
+pub fn get_interested_addrs(if_name: &str) -> Result<Addrs>
 {
     let (all_v4, all_v6) = get_addrs(if_name)?;
     let filtered_v4 =
@@ -57,7 +61,10 @@ pub fn get_interested_addrs(if_name: &str)
             let seg = addr.segments();
             !addr.is_loopback() && seg[0] & 0xffc0 != 0xfe80
         });
-    Ok((filtered_v4, filtered_v6))
+    Ok(Addrs {
+        v4_addrs: Box::new(filtered_v4),
+        v6_addrs: Box::new(filtered_v6),
+    })
 }
 
 #[cfg(test)]
@@ -66,7 +73,7 @@ mod test {
 
     use nix::Result;
 
-    use crate::iface::{get_addrs, get_interested_addrs};
+    use crate::iface::{Addrs, get_addrs, get_interested_addrs};
 
     #[test]
     fn test_get_addrs() -> Result<()> {
@@ -80,10 +87,12 @@ mod test {
 
     #[test]
     fn test_get_interested_addrs() -> Result<()> {
-        let (v4addrs, v6addrs) = get_interested_addrs("ens34")?;
+        let Addrs {
+            v4_addrs, v6_addrs
+        } = get_interested_addrs("ens34")?;
 
-        println!("{:?}", v4addrs.collect::<Vec<_>>());
-        println!("{:?}", v6addrs.collect::<Vec<_>>());
+        println!("{:?}", v4_addrs.collect::<Vec<_>>());
+        println!("{:?}", v6_addrs.collect::<Vec<_>>());
         Ok(())
     }
 }
