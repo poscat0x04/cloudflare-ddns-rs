@@ -121,7 +121,10 @@ async fn get_all_record_ids(
 
         let finish = r.result.len() < usize::from(PAGE_SIZE);
 
-        for record in r.result {
+        let non_locked =
+            r.result.into_iter().filter(|r| !r.locked);
+
+        for record in non_locked {
             match record.content {
                 DnsContent::A {..} => v4_ids.push(record.id),
                 DnsContent::AAAA {..} => v6_ids.push(record.id),
