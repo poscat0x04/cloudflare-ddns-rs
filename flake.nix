@@ -107,6 +107,7 @@
               after = [ "network-online.target" "nss-lookup.target" ] ++ devDep;
               bindsTo = devDep;
               requisite = lib.optional (!cfg.bindToInterface) devUnit;
+              restartTriggers = [ configFile ];
               unitConfig = {
                 # prevent excessive restarting when run by a timer
                 StartLimitIntervalSec = lib.mkIf (!cfg.bindToInterface) "1h";
