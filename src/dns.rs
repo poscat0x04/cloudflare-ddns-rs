@@ -1,16 +1,18 @@
 /// Abstracts over cloudflare API for easily updating DNS records
 use std::net::{Ipv4Addr, Ipv6Addr};
+use std::process::ExitCode;
 
-use anyhow::{Context, Result};
+use anyhow::Context;
 use cloudflare::endpoints::dns::{
     CreateDnsRecord, CreateDnsRecordParams, DeleteDnsRecord, DeleteDnsRecordResponse, DnsContent, DnsRecord,
-    ListDnsRecords, ListDnsRecordsParams, UpdateDnsRecord, UpdateDnsRecordParams
+    ListDnsRecords, ListDnsRecordsParams, UpdateDnsRecord, UpdateDnsRecordParams,
 };
 use cloudflare::framework::async_api::{ApiClient, Client};
-use cloudflare::framework::response::ApiSuccess;
+use cloudflare::framework::response::{ApiFailure, ApiSuccess};
 use itertools::{EitherOrBoth, Itertools};
 
 use crate::config::Config;
+use crate::exit_code::{Result, user_error_exitcode, WithExitCode};
 
 struct RecordIDs {
     v4_ids: Vec<String>,
@@ -50,7 +52,9 @@ pub async fn update_dns_with(
                                     name: &cfg.name,
                                     content: DnsContent::$cons {content: addr},
                                 },
-                            }).await.with_context(|| format!("Failed to update DNS record with ID {} to {}", &record_id, addr))?;
+                            }).await
+                            .with_context(|| format!("Failed to update DNS record with ID {} to {}", &record_id, addr))
+                            .map_exit_code(api_error_to_exitcode)?;
                     }
                     EitherOrBoth::Left(addr) => {
                         let _: ApiSuccess<DnsRecord> =
@@ -63,14 +67,18 @@ pub async fn update_dns_with(
                                     name: &cfg.name,
                                     content: DnsContent::$cons {content: addr},
                                 },
-                            }).await.with_context(|| format!("Failed to create DNS record for {}", addr))?;
+                            }).await
+                            .with_context(|| format!("Failed to create DNS record for {}", addr))
+                            .map_exit_code(api_error_to_exitcode)?;
                     }
                     EitherOrBoth::Right(record_id) => {
                         let _: ApiSuccess<DeleteDnsRecordResponse> =
                             client.request(&DeleteDnsRecord {
                                 zone_identifier: &cfg.zone_id,
                                 identifier: &record_id,
-                            }).await.with_context(|| format!("Failed to delete DNS record with ID {}", &record_id))?;
+                            }).await
+                            .with_context(|| format!("Failed to delete DNS record with ID {}", &record_id))
+                            .map_exit_code(api_error_to_exitcode)?;
                     }
                 }
             }
@@ -118,7 +126,8 @@ async fn get_all_record_ids(
                     direction: None,
                     search_match: None,
                 },
-            }).await.context("Failed to list DNS records")?;
+            }).await.context("Failed to list DNS records")
+                .map_exit_code(api_error_to_exitcode)?;
 
         let finish = r.result.len() < usize::from(PAGE_SIZE);
 
@@ -127,17 +136,24 @@ async fn get_all_record_ids(
 
         for record in non_locked {
             match record.content {
-                DnsContent::A {..} => v4_ids.push(record.id),
-                DnsContent::AAAA {..} => v6_ids.push(record.id),
+                DnsContent::A { .. } => v4_ids.push(record.id),
+                DnsContent::AAAA { .. } => v6_ids.push(record.id),
                 _ => (),
             }
         }
 
-        if finish { break }
+        if finish { break; }
         page += 1
     }
 
-    Ok(RecordIDs{v4_ids, v6_ids})
+    Ok(RecordIDs { v4_ids, v6_ids })
+}
+
+fn api_error_to_exitcode(err: &anyhow::Error) -> ExitCode {
+    match err.downcast_ref::<ApiFailure>() {
+        Some(ApiFailure::Error(_, _)) => user_error_exitcode(),
+        _ => ExitCode::FAILURE,
+    }
 }
 
 #[cfg(test)]

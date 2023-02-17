@@ -33,12 +33,12 @@ mod test {
 
     #[test]
     fn test_parse() {
-        const sample_file: &str = r#"
+        const SAMPLE_FILE: &str = r#"
 name = "a.example.com"
 if_name = "ppp"
 zone_id = "deadbeaf"
 "#;
-        let cfg: Result<Config, _> = from_str(sample_file);
+        let cfg: Result<Config, _> = from_str(SAMPLE_FILE);
         assert!(cfg.is_ok());
         assert!(cfg.unwrap().wait_duration.is_none());
     }
