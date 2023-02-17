@@ -127,6 +127,7 @@
                 RestartPreventExitStatus = [ "2" ];
                 RestartSec = "3s";
                 Type = "oneshot";
+                RemainAfterExit = cfg.bindToInterface;
                 # wait for 5 seconds before actually calling cf-ddns, should be enough time for the interface
                 # to configure its IP address
                 ExecStartPre = "/run/current-system/sw/bin/sleep 5";
