@@ -55,6 +55,10 @@
               '';
             };
 
+            tokenPath = mkOption {
+              type = types.str;
+            };
+
             calendar = mkOption {
               type = types.str;
               default = "hourly";
@@ -131,7 +135,8 @@
                 # wait for 5 seconds before actually calling cf-ddns, should be enough time for the interface
                 # to configure its IP address
                 ExecStartPre = "/run/current-system/sw/bin/sleep 5";
-                ExecStart = "${pkgs.cloudflare-ddns}/bin/cf-ddns --config ${configFile}";
+                LoadCredential = "token:${cfg.tokenPath}";
+                ExecStart = "${pkgs.cloudflare-ddns}/bin/cf-ddns --config ${configFile} --token %d/token";
               };
             };
 
