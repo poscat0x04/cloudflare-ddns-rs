@@ -31,6 +31,9 @@ pub async fn update_dns_with(
         v6_ids,
     } = get_all_record_ids(client, &cfg.zone_id, &cfg.name).await?;
 
+    let mut v4_update_count = 0u64;
+    let mut v6_update_count = 0u64;
+
     // We use a macro because while the update logic is the same for both A and AAAA records, it can't be typed if
     // we try to implement it as a function.
     //
@@ -38,7 +41,7 @@ pub async fn update_dns_with(
     // addrs, which handles the potential length difference, and then iterate over the zip product to
     // update/create/delete.
     macro_rules! update_all {
-        ($cons:ident, $pairs:expr) => {
+        ($cons:ident, $pairs:expr, $counter:expr) => {
             for pair in $pairs {
                 match pair {
                     EitherOrBoth::Both(addr, record_id) => {
@@ -55,6 +58,7 @@ pub async fn update_dns_with(
                             }).await
                             .with_context(|| format!("Failed to update DNS record with ID {} to {}", &record_id, addr))
                             .map_exit_code(api_error_to_exitcode)?;
+                        $counter += 1;
                     }
                     EitherOrBoth::Left(addr) => {
                         let _: ApiSuccess<DnsRecord> =
@@ -70,6 +74,7 @@ pub async fn update_dns_with(
                             }).await
                             .with_context(|| format!("Failed to create DNS record for {}", addr))
                             .map_exit_code(api_error_to_exitcode)?;
+                        $counter += 1;
                     }
                     EitherOrBoth::Right(record_id) => {
                         let _: ApiSuccess<DeleteDnsRecordResponse> =
@@ -79,6 +84,7 @@ pub async fn update_dns_with(
                             }).await
                             .with_context(|| format!("Failed to delete DNS record with ID {}", &record_id))
                             .map_exit_code(api_error_to_exitcode)?;
+                        $counter += 1;
                     }
                 }
             }
@@ -87,13 +93,15 @@ pub async fn update_dns_with(
 
     if cfg.v4 {
         let v4_pairs = v4_addrs.zip_longest(v4_ids);
-        update_all!(A, v4_pairs)
+        update_all!(A, v4_pairs, v4_update_count)
     }
 
     if cfg.v6 {
         let v6_pairs = v6_addrs.zip_longest(v6_ids);
-        update_all!(AAAA, v6_pairs)
+        update_all!(AAAA, v6_pairs, v6_update_count)
     }
+
+    println!(r#"Successfully updated {v4_update_count} A records and {v6_update_count} AAAA records for domain "{}""#, cfg.name);
 
     Ok(())
 }

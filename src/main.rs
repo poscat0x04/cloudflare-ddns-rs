@@ -5,6 +5,7 @@ use cloudflare::framework::async_api::Client;
 use cloudflare::framework::auth::Credentials::UserAuthToken;
 use cloudflare::framework::Environment::Production;
 use tokio::fs::read_to_string;
+use tokio::time::sleep;
 use toml::from_str;
 
 use crate::cli::Args;
@@ -69,7 +70,14 @@ async fn main_() -> Result<()> {
 
     if args.daemon {
         notify_startup_complete()?;
-        run_periodically(interval, || do_update(&client, &cfg)).await?;
+        println!("Going into sleep for {interval:?}");
+        sleep(interval).await;
+
+        run_periodically(interval, || async {
+            let r = do_update(&client, &cfg).await;
+            println!("Going into sleep for {interval:?}");
+            r
+        }).await?;
     }
 
     Ok(())
