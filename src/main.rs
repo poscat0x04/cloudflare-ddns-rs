@@ -2,6 +2,8 @@ use std::time::Duration;
 
 use anyhow::{bail, Context, Result};
 use cloudflare::framework::async_api::Client;
+use cloudflare::framework::auth::Credentials::UserAuthToken;
+use cloudflare::framework::Environment::Production;
 use tokio::fs::read_to_string;
 use toml::from_str;
 
@@ -11,13 +13,11 @@ use crate::dns::update_dns_with;
 use crate::interface::{Addrs, get_interested_addrs};
 use crate::notify::notify_startup_complete;
 use crate::periodic::run_periodically;
-use crate::utils::build_client_from_env;
 
 mod config;
 mod cli;
 mod dns;
 mod interface;
-mod utils;
 mod notify;
 mod periodic;
 
@@ -41,7 +41,13 @@ async fn main() -> Result<()> {
             .map(|min| Duration::from_secs(min*60))
             .unwrap_or(DEFAULT_INTERVAL);
 
-    let client = build_client_from_env()?;
+    let token =
+        read_to_string(&args.token).await
+            .context("Failed to read token")?
+            .trim().to_string();
+    let client =
+        Client::new(UserAuthToken { token }, Default::default(), Production)
+            .context("Failed to build cloudflare API client")?;
     // initialization complete
 
     do_update(&client, &cfg).await?;
