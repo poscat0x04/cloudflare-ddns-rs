@@ -76,8 +76,21 @@ mod test {
     use crate::interface::{Addrs, get_addrs, get_interested_addrs};
 
     #[test]
+    #[cfg(linux)]
     fn test_get_addrs() -> Result<()> {
         let (v4addrs, v6addrs) = get_addrs("lo")?;
+
+        assert_eq!(v4addrs[0], Ipv4Addr::new(127, 0, 0, 1));
+        assert_eq!(v6addrs[0], Ipv6Addr::from(1));
+
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(not(linux))]
+    fn test_get_addrs() -> Result<()> {
+        // loopback interface is named "lo0" on BSDs (and MacOS)
+        let (v4addrs, v6addrs) = get_addrs("lo0")?;
 
         assert_eq!(v4addrs[0], Ipv4Addr::new(127, 0, 0, 1));
         assert_eq!(v6addrs[0], Ipv6Addr::from(1));
