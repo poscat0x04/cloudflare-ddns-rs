@@ -4,4 +4,7 @@ Initial release.
 
 # 0.2.0
 
-Complete rewrite.
+Complete rewrite. Featuring:
+
+- Optimized binary size
+- Better error reporting
