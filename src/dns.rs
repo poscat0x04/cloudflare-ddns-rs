@@ -7,7 +7,7 @@ use cloudflare::endpoints::dns::{
     CreateDnsRecord, CreateDnsRecordParams, DeleteDnsRecord, DeleteDnsRecordResponse, DnsContent, DnsRecord,
     ListDnsRecords, ListDnsRecordsParams, UpdateDnsRecord, UpdateDnsRecordParams,
 };
-use cloudflare::framework::async_api::{ApiClient, Client};
+use cloudflare::framework::async_api::Client;
 use cloudflare::framework::response::{ApiFailure, ApiSuccess};
 use itertools::{EitherOrBoth, Itertools};
 

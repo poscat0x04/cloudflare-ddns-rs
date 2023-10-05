@@ -14,14 +14,14 @@ keywords = ["DNS", "cloudflare"]
 categories = ["command-line-utilities"]
 
 [dependencies]
-cloudflare = "0.10.1"
+cloudflare = "0.11"
 anyhow = "1.0"
-itertools = "0.10"
+itertools = "0.11"
 argh = "0.1"
-toml = "0.7"
+toml = "0.8"
 
 [dependencies.nix]
-version = "0.26"
+version = "0.27"
 features = ["net", "socket"]
 default-features = false
 
@@ -35,7 +35,7 @@ version = "1.0"
 features = ["derive"]
 
 [dependencies.tokio]
-version = "1.25"
+version = "1.32"
 features = ["fs", "sync", "macros", "rt-multi-thread"]
 
 [features]
