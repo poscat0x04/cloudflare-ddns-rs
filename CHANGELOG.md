@@ -8,3 +8,7 @@ Complete rewrite. Featuring:
 
 - Optimized binary size
 - Better error reporting
+
+# 0.2.1
+
+- Update dependencies
